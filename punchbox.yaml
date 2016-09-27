@@ -9,6 +9,8 @@ page:
     height: 210.0
 margin: 20.0
 output: test
-reverse: Flase
+reverse: True
 pitch: 2.0
 font_size: 1.0
+marker_offset: 3
+marker_size: 5

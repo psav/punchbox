@@ -30,10 +30,16 @@ with open('punchbox.yaml') as f:
     config = yaml.load(f)
 print config
 note_data = config['note_data']
+
+if config['reverse']:
+    note_data = note_data[::-1]
+
 divisor = config['divisor']
 pitch = config['pitch']
 font_size = config['font_size']
 margin = config['margin']
+marker_offset = config['marker_offset']
+marker_size = config['marker_size']
 
 for note in note_data:
     print note_name(note)
@@ -71,7 +77,7 @@ max_time = max([p[1] for p in notes])
 notes = sorted(notes, key=lambda p: p[1])
 max_length = max_time / divisor
 
-stave_width = len(note_data) * pitch + margin
+stave_width = (len(note_data) - 1) * pitch + margin
 staves_per_page = int(math.floor((config['page']['height'] - margin) / (stave_width)))
 
 max_stave_length = config['page']['width'] - (margin * 2)
@@ -96,10 +102,11 @@ for page in range(pages):
             break
 
         line_offset = (stave * (stave_width)) + margin
-        cross(dwg, 5, line_offset - 5, margin + max_stave_length)
-        cross(dwg, 5, line_offset + stave_width - margin + 5, margin + max_stave_length)
-        cross(dwg, 5, line_offset - 5, margin)
-        cross(dwg, 5, line_offset + stave_width - margin + 5, margin)
+        cross(dwg, marker_size, line_offset - marker_offset, margin + max_stave_length)
+        cross(dwg, marker_size,
+            line_offset + stave_width - margin + marker_offset, margin + max_stave_length)
+        cross(dwg, marker_size, line_offset - marker_offset, margin)
+        cross(dwg, marker_size, line_offset + stave_width - margin + marker_offset, margin)
         for i, note in enumerate(note_data):
             line_x = (i * pitch) + line_offset
             dwg.add(
@@ -107,7 +114,7 @@ for page in range(pages):
                     stroke=svgwrite.rgb(0, 0, 0, '%'), stroke_width=".1mm")
             )
             dwg.add(dwg.text(note_name(note), insert=(mm(-2 + margin), mm(line_x + font_size / 2)),
-                fill='red', font_size='{}mm'.format(font_size)))
+                             fill='red', font_size=mm(font_size)))
 
         for note in notes[offset:]:
             print offset, len(notes)
@@ -120,8 +127,8 @@ for page in range(pages):
                     break
                 dwg.add(
                     dwg.circle(
-                        ("{}mm".format(note_time + margin),
-                         "{}mm".format((note_pos * pitch) + line_offset)),
+                        (mm(note_time + margin),
+                         mm((note_pos * pitch) + line_offset)),
                         "1mm"))
             except:
                 print "couldn't add note"
