@@ -95,9 +95,8 @@ for page in range(pages):
         size=(mm(config['page']['width']), mm(config['page']['height'])))
 
     for stave in range(staves_per_page):
-        max_time = (page * stave * max_stave_length) + (stave * max_stave_length) + max_stave_length
+        max_time = ((page * staves_per_page) + stave) * max_stave_length + max_stave_length
         offset_time = max_time - max_stave_length
-        print "---------", stave, max_time
         if no_staves > no_staves_required:
             break
 
@@ -107,6 +106,11 @@ for page in range(pages):
             line_offset + stave_width - margin + marker_offset, margin + max_stave_length)
         cross(dwg, marker_size, line_offset - marker_offset, margin)
         cross(dwg, marker_size, line_offset + stave_width - margin + marker_offset, margin)
+        dwg.add(dwg.text('STAVE {}'.format((page * staves_per_page) + stave),
+            insert=(mm(margin * 2),
+                mm(line_offset + stave_width - margin + marker_offset)),
+            fill='blue', font_size=mm(font_size))
+        )
         for i, note in enumerate(note_data):
             line_x = (i * pitch) + line_offset
             dwg.add(
@@ -117,12 +121,12 @@ for page in range(pages):
                              fill='red', font_size=mm(font_size)))
 
         for note in notes[offset:]:
-            print offset, len(notes)
             offset += 1
             try:
                 note_pos = note_data.index(note[0] + best_transpose[0])
                 note_time = (note[1] / divisor) - offset_time
-                if note_time > max_time:
+
+                if note_time > max_stave_length:
                     offset = offset - 1
                     break
                 dwg.add(
@@ -131,5 +135,6 @@ for page in range(pages):
                          mm((note_pos * pitch) + line_offset)),
                         "1mm"))
             except:
+                continue
                 print "couldn't add note"
     dwg.save()
