@@ -1,6 +1,7 @@
 import svgwrite
 import math
 import yaml
+from collections import defaultdict
 from mido import MidiFile
 
 NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
@@ -23,7 +24,9 @@ def cross(dwg, size, x, y):
 
 
 def note_name(val):
-    return "{}{}".format(NOTE_NAMES[note % 12], val / 12)
+    mod = val % 12
+    name = "{}{}".format(NOTE_NAMES[mod], (val / 12) - 2)
+    return name
 
 
 with open('punchbox.yaml') as f:
@@ -40,10 +43,6 @@ font_size = config['font_size']
 margin = config['margin']
 marker_offset = config['marker_offset']
 marker_size = config['marker_size']
-
-for note in note_data:
-    print note_name(note)
-
 filename = config['filename']
 notes = []
 with MidiFile(filename) as midi_file:
@@ -51,26 +50,41 @@ with MidiFile(filename) as midi_file:
     best_transpose = (0, 0)
     written = False
     for trans in transpose:
+        unavail = defaultdict(int)
+        avail = defaultdict(int)
         tpos = 0
         tneg = 0
+        count = 0
         for i, track in enumerate(midi_file.tracks):
             time = 0
             for message in track:
                 time += message.time
                 if message.type == "note_on":
+                    count += 1
                     if message.velocity == 0:
                         continue
                     if not written:
                         notes.append((message.note, time))
                     if (message.note + trans) in note_data:
                         tpos += 1
+                        avail[note_name(message.note)] += 1
                     else:
                         tneg += 1
+                        unavail[note_name(message.note)] += 1
         written = True
         percen = tpos / float(tpos + tneg)
         if percen > best_transpose[1]:
+            print "Transposition Candidate Report"
+            print "Transposition: {}".format(trans)
+            print "Total Notes: {}".format(count)
+            print "Notes OK: {}".format(tpos)
+            print "Distinct Notes Missing: {}".format(len(unavail))
+            print "Total Notes Missing: {}".format(tneg)
+            print "Unavailables: {}".format(unavail)
+            print "========================================"
             best_transpose = (trans, percen)
         if percen == 1:
+            print "PERFECT Transposition Found"
             break
 print best_transpose
 max_time = max([p[1] for p in notes])
