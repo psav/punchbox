@@ -60,9 +60,9 @@ with MidiFile(filename) as midi_file:
             for message in track:
                 time += message.time
                 if message.type == "note_on":
-                    count += 1
                     if message.velocity == 0:
                         continue
+                    count += 1
                     if not written:
                         notes.append((message.note, time))
                     if (message.note + trans) in note_data:
@@ -90,15 +90,18 @@ print best_transpose
 max_time = max([p[1] for p in notes])
 notes = sorted(notes, key=lambda p: p[1])
 max_length = max_time / divisor
+print "MAX LENGTH: {}".format(max_length)
 
 stave_width = (len(note_data) - 1) * pitch + margin
 staves_per_page = int(math.floor((config['page']['height'] - margin) / (stave_width)))
 
 max_stave_length = config['page']['width'] - (margin * 2)
-
+print "MAX STAVE LENGTH: {}".format(max_stave_length)
 no_staves_required = int(math.ceil(max_length / max_stave_length))
+print "NO STAVES: {}".format(no_staves_required)
 
-pages = int(math.ceil(no_staves_required / staves_per_page))
+pages = int(math.ceil(float(no_staves_required) / staves_per_page))
+print "PAGES: {}".format(pages)
 
 no_staves = 0
 offset = 0
@@ -138,17 +141,24 @@ for page in range(pages):
             offset += 1
             try:
                 note_pos = note_data.index(note[0] + best_transpose[0])
-                note_time = (note[1] / divisor) - offset_time
-
-                if note_time > max_stave_length:
-                    offset = offset - 1
-                    break
-                dwg.add(
-                    dwg.circle(
-                        (mm(note_time + margin),
-                         mm((note_pos * pitch) + line_offset)),
-                        "1mm"))
+                fill = "black"
             except:
-                continue
-                print "couldn't add note"
+                for i, dta in enumerate(note_data[::-1] if config['reverse'] else note_data):
+                    #print note[0] + best_transpose[0], dta
+                    if note[0] + best_transpose[0] > dta:
+                        continue
+                    else:
+                        break
+                note_pos = note_data.index(dta)
+                fill = "red"
+            note_time = (note[1] / divisor) - offset_time
+
+            if note_time > max_stave_length:
+                offset = offset - 1
+                break
+            dwg.add(
+                dwg.circle(
+                    (mm(note_time + margin),
+                     mm((note_pos * pitch) + line_offset)),
+                    "1mm", fill=fill))
     dwg.save()
