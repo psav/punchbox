@@ -1,4 +1,8 @@
-note_data: [60, 62, 67, 69, 71, 72, 74, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 98, 100]
+boxen:
+  35note:
+    note_data: [60, 62, 67, 69, 71, 72, 74, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 98, 100]
+    pitch: 2.0
+    reverse: True
 divisor: 49.5 #67.0
 #filename: FF7AC-TifasTheme_short2.mid
 filename: mooshoo.mid
@@ -10,8 +14,7 @@ page:
     height: 210.0
 margin: 20.0
 output: mooshoo
-reverse: True
-pitch: 2.0
 font_size: 1.0
 marker_offset: 6
 marker_size: 5
+default_musicbox: 35note
