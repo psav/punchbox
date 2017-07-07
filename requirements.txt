@@ -1,0 +1,5 @@
+click
+mido
+pbr
+PyYAML
+svgwrite
