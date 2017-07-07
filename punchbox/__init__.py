@@ -36,6 +36,7 @@ def note_name(val):
 @click.command(help="Run punchbox on a file")
 @click.argument('filename', default=config.get('filename'))
 @click.option('--output', default=config.get('output', 'output'))
+@click.option('--name', default=config.get('name'))
 @click.option('--musicbox', default=config.get('default_musicbox'))
 @click.option('--marker-offset', default=config.get('marker_offset', 6))
 @click.option('--marker-offset-top', default=config.get('marker_offset_top', None))
@@ -50,8 +51,9 @@ def note_name(val):
 @click.option('--page-height', default=config.get('page', {}).get('height', 210.0))
 @click.option('--debug', default=False)
 def main(filename, output, musicbox, marker_offset, marker_offset_top, marker_offset_bottom,
-         marker_size, margin, font_size, divisor, debug,
+         marker_size, margin, font_size, divisor, debug, name,
          transpose_upper, transpose_lower, page_width, page_height):
+    name = name or filename
     note_data = config['boxen'][musicbox].get('note_data',
                                               [60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72])
     reverse = config['boxen'][musicbox].get('reverse', False)
@@ -149,7 +151,7 @@ def main(filename, output, musicbox, marker_offset, marker_offset_top, marker_of
                 line_offset + stave_width - margin + mark_btm, margin + max_stave_length)
             cross(dwg, marker_size, line_offset - mark_top, margin)
             cross(dwg, marker_size, line_offset + stave_width - margin + mark_btm, margin)
-            dwg.add(dwg.text('STAVE {}'.format((page * staves_per_page) + stave),
+            dwg.add(dwg.text('STAVE {} - {}'.format((page * staves_per_page) + stave, name),
                 insert=(mm(margin * 2),
                     mm(line_offset + stave_width - margin + marker_offset)),
                 fill='blue', font_size=mm(font_size))
