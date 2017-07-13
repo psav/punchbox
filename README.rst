@@ -19,3 +19,7 @@ Coming soon:
 
 * Gap analysis
 * Note proximity
+
+
+
+.. image:: mozart0.svg
