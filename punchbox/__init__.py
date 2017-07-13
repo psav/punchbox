@@ -36,49 +36,41 @@ def note_name(val):
 
 def get_notes_from_midi(filename, transpose_lower, transpose_upper, note_data):
     notes = []
-
+    notes_use = defaultdict(int)
     with MidiFile(filename) as midi_file:
         transpose = range(transpose_lower, transpose_upper)
         best_transpose = (0, 0)
         written = False
-        for trans in transpose:
-            unavail = defaultdict(int)
-            avail = defaultdict(int)
-            tpos = 0
-            tneg = 0
-            count = 0
-            for i, track in enumerate(midi_file.tracks):
-                time = 0
-                for message in track:
-                    time += message.time
-                    if message.type == "note_on":
-                        if message.velocity == 0:
-                            continue
-                        count += 1
-                        if not written:
-                            notes.append((message.note, time))
-                        if (message.note + trans) in note_data:
-                            tpos += 1
-                            avail[note_name(message.note)] += 1
-                        else:
-                            tneg += 1
-                            unavail[note_name(message.note)] += 1
-            written = True
-            percen = tpos / float(tpos + tneg)
-            if percen > best_transpose[1]:
-                if DEBUG:
-                    print "Transposition Candidate Report"
-                    print "Transposition: {}".format(trans)
-                    print "Total Notes: {}".format(count)
-                    print "Notes OK: {}".format(tpos)
-                    print "Distinct Notes Missing: {}".format(len(unavail))
-                    print "Total Notes Missing: {}".format(tneg)
-                    print "Unavailables: {}".format(unavail)
-                    print "========================================"
-                best_transpose = (trans, percen)
-            if percen == 1:
-                print "PERFECT Transposition Found"
-                break
+        for i, track in enumerate(midi_file.tracks):
+            time = 0
+            for message in track:
+                time += message.time
+                if message.type == "note_on":
+                    if message.velocity == 0:
+                        continue
+                    if not written:
+                        notes.append((message.note, time))
+                        notes_use[message.note] += 1
+
+    print notes_use
+    best_transpose = (0, 0)
+    for trans in transpose:
+        avail = sum([freq for note, freq in notes_use.iteritems() if note + trans in note_data])
+        percen = avail / float(len(notes))
+        if percen == 1:
+            best_transpose = (trans, 1)
+            print "PERFECT TRANSPOSITION FOUND"
+        elif percen > best_transpose[1]:
+            if DEBUG:
+                print "Transposition Candidate Report"
+                print "Transposition: {}".format(trans)
+                print "Total Notes: {}".format(len(notes))
+                print "Notes OK: {}".format(avail)
+                #print "Distinct Notes Missing: {}".format(len(unavail))
+                print "Total Notes Missing: {}".format(len(notes) - avail)
+                #print "Unavailables: {}".format(unavail)
+                print "========================================"
+            best_transpose = (trans, percen)
     return notes, best_transpose
 
 
