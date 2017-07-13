@@ -9,6 +9,7 @@ with open('punchbox.yaml') as f:
     config = yaml.load(f)
 
 NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+DEBUG = False
 
 
 def mm(val):
@@ -33,44 +34,9 @@ def note_name(val):
     return name
 
 
-@click.command(help="Run punchbox on a file")
-@click.argument('filename', default=config.get('filename'))
-@click.option('--output', default=config.get('output', 'output'))
-@click.option('--name', default=config.get('name'))
-@click.option('--musicbox', default=config.get('default_musicbox'))
-@click.option('--marker-offset', default=config.get('marker_offset', 6))
-@click.option('--marker-offset-top', default=config.get('marker_offset_top', None))
-@click.option('--marker-offset-bottom', default=config.get('marker_offset_bottom', None))
-@click.option('--marker-size', default=config.get('marker_size', 5))
-@click.option('--margin', default=config.get('margin', 20))
-@click.option('--font-size', default=config.get('font_size', 1.0))
-@click.option('--divisor', default=config.get('divisor', 67.0))
-@click.option('--transpose-upper', default=config.get('transpose', {}).get('upper', 100))
-@click.option('--transpose-lower', default=config.get('transpose', {}).get('lower', -100))
-@click.option('--page-width', default=config.get('page', {}).get('width', 297.0))
-@click.option('--page-height', default=config.get('page', {}).get('height', 210.0))
-@click.option('--debug', default=False)
-def main(filename, output, musicbox, marker_offset, marker_offset_top, marker_offset_bottom,
-         marker_size, margin, font_size, divisor, debug, name,
-         transpose_upper, transpose_lower, page_width, page_height):
-    name = name or filename
-    note_data = config['boxen'][musicbox].get('note_data',
-                                              [60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72])
-    reverse = config['boxen'][musicbox].get('reverse', False)
-    pitch = config['boxen'][musicbox].get('pitch', 2)
-
-    if reverse:
-        note_data = note_data[::-1]
-
-    divisor = float(divisor)
-    font_size = float(font_size)
-    page_width = float(page_width)
-    page_height = float(page_height)
-
-    mark_top = float(marker_offset_top or marker_offset)
-    mark_btm = float(marker_offset_bottom or marker_offset)
-
+def get_notes_from_midi(filename, transpose_lower, transpose_upper, note_data):
     notes = []
+
     with MidiFile(filename) as midi_file:
         transpose = range(transpose_lower, transpose_upper)
         best_transpose = (0, 0)
@@ -100,7 +66,7 @@ def main(filename, output, musicbox, marker_offset, marker_offset_top, marker_of
             written = True
             percen = tpos / float(tpos + tneg)
             if percen > best_transpose[1]:
-                if debug:
+                if DEBUG:
                     print "Transposition Candidate Report"
                     print "Transposition: {}".format(trans)
                     print "Total Notes: {}".format(count)
@@ -113,6 +79,51 @@ def main(filename, output, musicbox, marker_offset, marker_offset_top, marker_of
             if percen == 1:
                 print "PERFECT Transposition Found"
                 break
+    return notes, best_transpose
+
+
+@click.command(help="Run punchbox on a file")
+@click.argument('filename', default=config.get('filename'))
+@click.option('--output', default=config.get('output', 'output'))
+@click.option('--name', default=config.get('name'))
+@click.option('--musicbox', default=config.get('default_musicbox'))
+@click.option('--marker-offset', default=config.get('marker_offset', 6))
+@click.option('--marker-offset-top', default=config.get('marker_offset_top', None))
+@click.option('--marker-offset-bottom', default=config.get('marker_offset_bottom', None))
+@click.option('--marker-size', default=config.get('marker_size', 5))
+@click.option('--margin', default=config.get('margin', 20))
+@click.option('--font-size', default=config.get('font_size', 1.0))
+@click.option('--divisor', default=config.get('divisor', 67.0))
+@click.option('--transpose-upper', default=config.get('transpose', {}).get('upper', 100))
+@click.option('--transpose-lower', default=config.get('transpose', {}).get('lower', -100))
+@click.option('--page-width', default=config.get('page', {}).get('width', 297.0))
+@click.option('--page-height', default=config.get('page', {}).get('height', 210.0))
+@click.option('--debug', default=False)
+def main(filename, output, musicbox, marker_offset, marker_offset_top, marker_offset_bottom,
+         marker_size, margin, font_size, divisor, debug, name,
+         transpose_upper, transpose_lower, page_width, page_height):
+    global DEBUG
+    DEBUG = debug
+    name = name or filename
+    note_data = config['boxen'][musicbox].get('note_data',
+                                              [60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72])
+    reverse = config['boxen'][musicbox].get('reverse', False)
+    pitch = config['boxen'][musicbox].get('pitch', 2)
+
+    if reverse:
+        note_data = note_data[::-1]
+
+    divisor = float(divisor)
+    font_size = float(font_size)
+    page_width = float(page_width)
+    page_height = float(page_height)
+
+    mark_top = float(marker_offset_top or marker_offset)
+    mark_btm = float(marker_offset_bottom or marker_offset)
+
+    notes, best_transpose = get_notes_from_midi(
+        filename, transpose_lower, transpose_upper, note_data)
+
     print "TRANSPOSE: {}".format(best_transpose[0])
     print "PERCENTAGE HIT: {}%".format(best_transpose[1] * 100)
     max_time = max([p[1] for p in notes])
@@ -173,7 +184,6 @@ def main(filename, output, musicbox, marker_offset, marker_offset_top, marker_of
                     fill = "black"
                 except:
                     for i, dta in enumerate(note_data[::-1] if reverse else note_data):
-                        #print note[0] + best_transpose[0], dta
                         if note[0] + best_transpose[0] > dta:
                             continue
                         else:
