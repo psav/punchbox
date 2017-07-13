@@ -18,3 +18,4 @@ Features
 Coming soon:
 
 * Gap analysis
+* Note proximity
