@@ -22,4 +22,4 @@ Coming soon:
 
 
 
-.. image:: mozart0.svg
+.. image:: https://github.com/psav/punchbox/blob/master/mozart0.svg
