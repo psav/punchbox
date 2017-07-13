@@ -19,3 +19,9 @@ Coming soon:
 
 * Gap analysis
 * Note proximity
+
+
+Example Render
+--------------
+
+.. image:: https://github.com/psav/punchbox/raw/master/mozart0.png
