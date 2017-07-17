@@ -60,19 +60,6 @@ def get_notes_from_midi(filename, transpose_lower, transpose_upper, note_data, t
 
     notes = sorted(notes, key=lambda p: p[1])
 
-    min_note_distance = {}
-    for note, ntime in notes:
-        if note not in min_note_distance:
-            min_note_distance[note] = [ntime, None]
-        else:
-            diff = ntime - min_note_distance[note][0]
-            if min_note_distance[note][0] < diff:
-                min_note_distance[note][1] = diff
-    print min_note_distance
-
-    min_distance = min([v[1] for v in min_note_distance.values() if v[1] is not None])
-    print "MINIMUM NOTE DISTANCE: {}".format(min_distance)
-
     best_transpose = (0, 0)
     for trans in transpose:
         avail = sum([freq for note, freq in notes_use.iteritems() if note + trans in note_data])
@@ -139,6 +126,21 @@ def main(filename, output, musicbox, marker_offset, marker_offset_top, marker_of
 
     notes, best_transpose = get_notes_from_midi(
         filename, transpose_lower, transpose_upper, note_data)
+
+    min_note_distance = {}
+    for note, ntime in notes:
+        if note not in min_note_distance:
+            min_note_distance[note] = [ntime, None]
+        else:
+            diff = ntime - min_note_distance[note][0]
+            if min_note_distance[note][1] is None:
+                min_note_distance[note][1] = diff
+            elif min_note_distance[note][1] > diff:
+                min_note_distance[note][1] = diff
+            min_note_distance[note][0] = ntime
+
+    min_distance = min([v[1] for v in min_note_distance.values() if v[1] is not None])
+    print "MINIMUM NOTE DISTANCE: {}".format(min_distance / divisor)
 
     print "TRANSPOSE: {}".format(best_transpose[0])
     print "PERCENTAGE HIT: {}%".format(best_transpose[1] * 100)
