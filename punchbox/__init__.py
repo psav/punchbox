@@ -34,7 +34,7 @@ def note_name(val):
     return name
 
 
-def get_notes_from_midi(filename, transpose_lower, transpose_upper, note_data):
+def get_notes_from_midi(filename, transpose_lower, transpose_upper, note_data, tracks=range(16)):
     notes = []
     notes_use = defaultdict(int)
     with MidiFile(filename) as midi_file:
@@ -42,7 +42,10 @@ def get_notes_from_midi(filename, transpose_lower, transpose_upper, note_data):
         best_transpose = (0, 0)
         written = False
         for i, track in enumerate(midi_file.tracks):
+            if i not in tracks:
+                continue
             time = 0
+            track_count = 0
             for message in track:
                 time += message.time
                 if message.type == "note_on":
@@ -51,11 +54,32 @@ def get_notes_from_midi(filename, transpose_lower, transpose_upper, note_data):
                     if not written:
                         notes.append((message.note, time))
                         notes_use[message.note] += 1
+                    track_count += 1
+            if DEBUG:
+                print "Track {}: {} note_on messages processed".format(i, track_count)
 
-    print notes_use
+    notes = sorted(notes, key=lambda p: p[1])
+
+    min_note_distance = {}
+    for note, ntime in notes:
+        if note not in min_note_distance:
+            min_note_distance[note] = [ntime, None]
+        else:
+            diff = ntime - min_note_distance[note][0]
+            if min_note_distance[note][0] < diff:
+                min_note_distance[note][1] = diff
+    print min_note_distance
+
+    min_distance = min([v[1] for v in min_note_distance.values() if v[1] is not None])
+    print "MINIMUM NOTE DISTANCE: {}".format(min_distance)
+
     best_transpose = (0, 0)
     for trans in transpose:
         avail = sum([freq for note, freq in notes_use.iteritems() if note + trans in note_data])
+        unavail = {
+            note_name(note): freq for note, freq in
+            notes_use.iteritems() if note + trans not in note_data
+        }
         percen = avail / float(len(notes))
         if percen == 1:
             best_transpose = (trans, 1)
@@ -66,9 +90,9 @@ def get_notes_from_midi(filename, transpose_lower, transpose_upper, note_data):
                 print "Transposition: {}".format(trans)
                 print "Total Notes: {}".format(len(notes))
                 print "Notes OK: {}".format(avail)
-                #print "Distinct Notes Missing: {}".format(len(unavail))
+                print "Distinct Notes Missing: {}".format(len(unavail))
                 print "Total Notes Missing: {}".format(len(notes) - avail)
-                #print "Unavailables: {}".format(unavail)
+                print "Unavailables: {}".format(unavail)
                 print "========================================"
             best_transpose = (trans, percen)
     return notes, best_transpose
