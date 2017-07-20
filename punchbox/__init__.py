@@ -111,7 +111,8 @@ def main(filename, output, musicbox, marker_offset, marker_offset_top, marker_of
     note_data = config['boxen'][musicbox].get('note_data',
                                               [60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72])
     reverse = config['boxen'][musicbox].get('reverse', False)
-    pitch = config['boxen'][musicbox].get('pitch', 2)
+    pitch = config['boxen'][musicbox].get('pitch', 2.0)
+    note_collision = config['boxen'][musicbox].get('note_collision', 5.0)
 
     if reverse:
         note_data = note_data[::-1]
@@ -141,6 +142,10 @@ def main(filename, output, musicbox, marker_offset, marker_offset_top, marker_of
 
     min_distance = min([v[1] for v in min_note_distance.values() if v[1] is not None])
     print "MINIMUM NOTE DISTANCE: {}".format(min_distance / divisor)
+    if min_distance / divisor < note_collision:
+        print ("WARNING: SOME NOTES MAY NOT PLAY!! "
+               "{}mm note distance is less than {}mm REQUIRED".format(
+                   min_distance / divisor, note_collision))
 
     print "TRANSPOSE: {}".format(best_transpose[0])
     print "PERCENTAGE HIT: {}%".format(best_transpose[1] * 100)
