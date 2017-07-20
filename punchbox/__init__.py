@@ -5,6 +5,7 @@ import yaml
 from collections import defaultdict
 from mido import MidiFile
 
+
 with open('punchbox.yaml') as f:
     config = yaml.load(f)
 
@@ -85,6 +86,17 @@ def get_notes_from_midi(filename, transpose_lower, transpose_upper, note_data, t
     return notes, best_transpose
 
 
+class MusicBox(object):
+    def __init__(self, config):
+        self.note_data = config.get('note_data',
+                                    [60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72])
+        self.reverse = config.get('reverse', False)
+        self.pitch = config.get('pitch', 2.0)
+        self.note_collision = config.get('note_collision', 5.0)
+        if self.reverse:
+            self.note_data = self.note_data[::-1]
+
+
 @click.command(help="Run punchbox on a file")
 @click.argument('filename', default=config.get('filename'))
 @click.option('--output', default=config.get('output', 'output'))
@@ -108,14 +120,7 @@ def main(filename, output, musicbox, marker_offset, marker_offset_top, marker_of
     global DEBUG
     DEBUG = debug
     name = name or filename
-    note_data = config['boxen'][musicbox].get('note_data',
-                                              [60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72])
-    reverse = config['boxen'][musicbox].get('reverse', False)
-    pitch = config['boxen'][musicbox].get('pitch', 2.0)
-    note_collision = config['boxen'][musicbox].get('note_collision', 5.0)
-
-    if reverse:
-        note_data = note_data[::-1]
+    music_box = MusicBox(config['boxen'][musicbox])
 
     divisor = float(divisor)
     font_size = float(font_size)
@@ -126,7 +131,7 @@ def main(filename, output, musicbox, marker_offset, marker_offset_top, marker_of
     mark_btm = float(marker_offset_bottom or marker_offset)
 
     notes, best_transpose = get_notes_from_midi(
-        filename, transpose_lower, transpose_upper, note_data)
+        filename, transpose_lower, transpose_upper, music_box.note_data)
 
     min_note_distance = {}
     for note, ntime in notes:
@@ -142,10 +147,10 @@ def main(filename, output, musicbox, marker_offset, marker_offset_top, marker_of
 
     min_distance = min([v[1] for v in min_note_distance.values() if v[1] is not None])
     print "MINIMUM NOTE DISTANCE: {}".format(min_distance / divisor)
-    if min_distance / divisor < note_collision:
+    if min_distance / divisor < music_box.note_collision:
         print ("WARNING: SOME NOTES MAY NOT PLAY!! "
                "{}mm note distance is less than {}mm REQUIRED".format(
-                   min_distance / divisor, note_collision))
+                   min_distance / divisor, music_box.note_collision))
 
     print "TRANSPOSE: {}".format(best_transpose[0])
     print "PERCENTAGE HIT: {}%".format(best_transpose[1] * 100)
@@ -154,7 +159,7 @@ def main(filename, output, musicbox, marker_offset, marker_offset_top, marker_of
     max_length = max_time / divisor
     print "MAX LENGTH: {}".format(max_length)
 
-    stave_width = (len(note_data) - 1) * pitch + margin
+    stave_width = (len(music_box.note_data) - 1) * music_box.pitch + margin
     staves_per_page = int(math.floor((page_height - margin) / (stave_width)))
 
     max_stave_length = page_width - (margin * 2)
@@ -190,8 +195,8 @@ def main(filename, output, musicbox, marker_offset, marker_offset_top, marker_of
                     mm(line_offset + stave_width - margin + marker_offset)),
                 fill='blue', font_size=mm(font_size))
             )
-            for i, note in enumerate(note_data):
-                line_x = (i * pitch) + line_offset
+            for i, note in enumerate(music_box.note_data):
+                line_x = (i * music_box.pitch) + line_offset
                 dwg.add(
                     dwg.line((mm(margin), mm(line_x)), (mm(max_stave_length + margin), mm(line_x)),
                         stroke=svgwrite.rgb(0, 0, 0, '%'), stroke_width=".1mm")
@@ -203,15 +208,17 @@ def main(filename, output, musicbox, marker_offset, marker_offset_top, marker_of
             for note in notes[offset:]:
                 offset += 1
                 try:
-                    note_pos = note_data.index(note[0] + best_transpose[0])
+                    note_pos = music_box.note_data.index(note[0] + best_transpose[0])
                     fill = "black"
                 except:
-                    for i, dta in enumerate(note_data[::-1] if reverse else note_data):
+                    for i, dta in enumerate(
+                            music_box.note_data[::-1] if
+                            music_box.reverse else music_box.note_data):
                         if note[0] + best_transpose[0] > dta:
                             continue
                         else:
                             break
-                    note_pos = note_data.index(dta)
+                    note_pos = music_box.note_data.index(dta)
                     fill = "red"
                 note_time = (note[1] / divisor) - offset_time
 
@@ -221,7 +228,7 @@ def main(filename, output, musicbox, marker_offset, marker_offset_top, marker_of
                 dwg.add(
                     dwg.circle(
                         (mm(note_time + margin),
-                         mm((note_pos * pitch) + line_offset)),
+                         mm((note_pos * music_box.pitch) + line_offset)),
                         "1mm", fill=fill))
         dwg.save()
         if best_transpose[1] != 1:
