@@ -3,6 +3,7 @@ boxen:
     note_data: [60, 62, 67, 69, 71, 72, 74, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 98, 100]
     pitch: 2.0
     reverse: True
+    note_collision: 5.0
 divisor: 49.5 #67.0
 #filename: FF7AC-TifasTheme_short2.mid
 filename: mooshoo.mid
