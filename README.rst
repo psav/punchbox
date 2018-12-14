@@ -25,3 +25,16 @@ Example Render
 --------------
 
 .. image:: https://github.com/psav/punchbox/raw/master/mozart0.png
+
+
+Usage
+-----
+
+To install, clone the repo, and then execute the following:
+
+```
+virtualenv -p python2 .pb2
+pip install -U pip
+source .pb2/bin/activate
+pip install .
+```
