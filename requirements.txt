@@ -1,3 +1,4 @@
+pre-commit
 click
 mido
 pbr

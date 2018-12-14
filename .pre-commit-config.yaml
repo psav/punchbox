@@ -1,0 +1,31 @@
+exclude: iqe/data/plugin_skel
+repos:
+- repo: https://github.com/asottile/reorder_python_imports
+  rev: v1.3.3
+  hooks:
+  - id: reorder-python-imports
+    language_version: python3
+- repo: https://github.com/ambv/black
+  rev: 18.9b0
+  hooks:
+  - id: black
+    args: [--safe, --quiet, --line-length, "100"]
+    language_version: python3
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v2.0.0
+  hooks:
+  - id: trailing-whitespace
+    language_version: python3
+  - id: end-of-file-fixer
+    language_version: python3
+  - id: check-yaml
+    language_version: python3
+  - id: debug-statements
+    language_version: python3
+  - id: flake8
+    language_version: python3
+- repo: https://github.com/asottile/pyupgrade
+  rev: v1.10.1
+  hooks:
+  - id: pyupgrade
+    language_version: python3
