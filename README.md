@@ -29,7 +29,7 @@ Example Render
 Usage
 -----
 
-To install, clone the repo, and then execute the following:
+To install, clone the repo, cd into it and then execute the following:
 
 ```
 virtualenv -p python2 .pb2
