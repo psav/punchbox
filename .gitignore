@@ -2,3 +2,9 @@
 *.mid
 *.pyc
 *.rg
+.venv
+.eggs
+.idea
+build
+punchbox.egg-info
+dist/

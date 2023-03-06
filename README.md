@@ -32,8 +32,15 @@ Usage
 To install, clone the repo, cd into it and then execute the following:
 
 ```
-virtualenv -p python2 .pb2
-source .pb2/bin/activate
+python -m venv .venv
+source .venv/bin/activate
 pip install -U pip
 pip install .
 ```
+
+To get an example output, use
+```
+punchbox <yourfile.mid> --output <name>
+```
+
+And multiple svg files will be generated with `<name>.svg` and a numerical appendix

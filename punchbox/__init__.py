@@ -8,7 +8,7 @@ from mido import MidiFile
 
 
 with open("punchbox.yaml") as f:
-    config = yaml.load(f)
+    config = yaml.safe_load(f)
 
 NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 DEBUG = False
@@ -72,10 +72,10 @@ def get_notes_from_midi(filename, transpose_lower, transpose_upper, note_data, t
 
     best_transpose = (0, 0)
     for trans in transpose:
-        avail = sum([freq for note, freq in notes_use.iteritems() if note + trans in note_data])
+        avail = sum([freq for note, freq in notes_use.items() if note + trans in note_data])
         unavail = {
             note_name(note): freq
-            for note, freq in notes_use.iteritems()
+            for note, freq in notes_use.items()
             if note + trans not in note_data
         }
         percen = avail / float(len(notes))
