@@ -5,8 +5,7 @@ boxen:
     reverse: True
     note_collision: 5.0
 divisor: 49.5 #67.0
-#filename: FF7AC-TifasTheme_short2.mid
-filename: mooshoo.mid
+filename: mozart.mid
 transpose:
     lower: -100
     upper: 100
@@ -14,7 +13,7 @@ page:
     width: 297.0
     height: 210.0
 margin: 20.0
-output: mooshoo
+output: mozart
 font_size: 1.0
 marker_offset: 6
 marker_size: 5
